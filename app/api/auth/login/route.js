@@ -5,7 +5,7 @@ import { createTenantToken, TENANT_COOKIE } from '@/lib/auth';
 
 export async function POST(req) {
   const { email, password } = await req.json().catch(() => ({}));
-  const user = getUserByEmail(email || '');
+  const user = await getUserByEmail(email || '');
   if (!user || !verifyPassword(password || '', user.passwordHash)) {
     return NextResponse.json({ error: 'ইমেইল বা পাসওয়ার্ড ভুল।' }, { status: 401 });
   }

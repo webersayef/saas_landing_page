@@ -7,21 +7,21 @@ import { getSubscriptionStatus } from '@/lib/billing';
 
 export async function GET() {
   if (!(await isSuperAuthed())) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
-  const users = listAllUsers();
-  const deposits = listAllDeposits();
+  const users = await listAllUsers();
+  const deposits = await listAllDeposits();
   return NextResponse.json({
     stats: {
       users: users.length,
-      pages: listAllPages().length,
-      orders: listAllOrders().length,
+      pages: (await listAllPages()).length,
+      orders: (await listAllOrders()).length,
       walletTotal: users.reduce((s, u) => s + u.walletBalance, 0),
       pendingDeposits: deposits.filter((d) => d.status === 'pending').length,
     },
-    users: users.map((u) => ({
+    users: await Promise.all(users.map(async (u) => ({
       ...publicUser(u),
-      pageCount: countPagesByUser(u.id),
+      pageCount: await countPagesByUser(u.id),
       status: getSubscriptionStatus(u),
-    })),
+    }))),
     deposits: deposits.map((d) => ({
       ...d,
       userEmail: users.find((u) => u.id === d.userId)?.email || '',

@@ -18,7 +18,7 @@ const NAV = [
 
 export default async function DashboardLayout({ children }) {
   const user = await requireTenantUser();
-  const monthlyPrice = priceForPageCount(countPagesByUser(user.id));
+  const monthlyPrice = priceForPageCount(await countPagesByUser(user.id));
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
       <aside style={{

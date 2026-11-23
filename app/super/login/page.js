@@ -20,14 +20,16 @@ export default function SuperLoginPage() {
     router.refresh();
   }
   return (
-    <main style={{ maxWidth: 400, margin: '60px auto', padding: '0 20px' }}>
-      <div className="card">
-        <h1>Super Admin লগইন</h1>
+    <main className="auth-main" style={{ minHeight: '100vh' }}>
+      <div className="auth-card">
+        <span className="mkt-logo-badge" style={{ marginBottom: 14 }}>S</span>
+        <h1>Super Admin</h1>
+        <p className="sub">SHERA IT SaaS — মালিকের প্যানেলে লগইন করুন।</p>
         <form onSubmit={submit}>
-          <label>পাসওয়ার্ড</label>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-          {error && <p className="error">{error}</p>}
-          <p><button className="btn" type="submit" style={{ width: '100%' }}>লগইন</button></p>
+          <label htmlFor="super-pass">পাসওয়ার্ড</label>
+          <input id="super-pass" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          {error && <div className="auth-error" role="alert">⚠️ {error}</div>}
+          <button className="btn" type="submit">লগইন</button>
         </form>
       </div>
     </main>

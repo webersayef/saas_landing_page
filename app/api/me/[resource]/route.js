@@ -25,8 +25,8 @@ export async function GET(req, { params }) {
   const { resource } = await params;
 
   if (resource === 'overview') {
-    const pages = listPagesByUser(user.id);
-    const orders = listOrdersByUser(user.id);
+    const pages = await listPagesByUser(user.id);
+    const orders = await listOrdersByUser(user.id);
     return NextResponse.json({
       user: publicUser(user),
       status: getSubscriptionStatus(user),
@@ -36,14 +36,14 @@ export async function GET(req, { params }) {
       recentOrders: orders.slice(0, 5),
     });
   }
-  if (resource === 'pages') return NextResponse.json({ pages: listPagesByUser(user.id) });
-  if (resource === 'products') return NextResponse.json({ products: listProductsByUser(user.id) });
-  if (resource === 'orders') return NextResponse.json({ orders: listOrdersByUser(user.id) });
+  if (resource === 'pages') return NextResponse.json({ pages: await listPagesByUser(user.id) });
+  if (resource === 'products') return NextResponse.json({ products: await listProductsByUser(user.id) });
+  if (resource === 'orders') return NextResponse.json({ orders: await listOrdersByUser(user.id) });
   if (resource === 'wallet') {
     return NextResponse.json({
       balance: user.walletBalance,
-      deposits: listDepositsByUser(user.id),
-      ledger: listLedgerByUser(user.id),
+      deposits: await listDepositsByUser(user.id),
+      ledger: await listLedgerByUser(user.id),
     });
   }
   if (resource === 'settings') return NextResponse.json({ user: publicUser(user) });
@@ -59,11 +59,11 @@ export async function POST(req, { params }) {
   if (resource === 'pages') {
     // 1-click create: template + product + shop name → live page.
     const title = String(body.title || user.shopName || 'আমার শপ').trim();
-    const slug = uniqueSlug(body.slug || title, (s) => !!getPageBySlug(s));
+    const slug = await uniqueSlug(body.slug || title, async (s) => !!(await getPageBySlug(s)));
     const product = body.productId
-      ? listProductsByUser(user.id).find((p) => p.id === body.productId) || null
+      ? (await listProductsByUser(user.id)).find((p) => p.id === body.productId) || null
       : null;
-    const page = createPage({
+    const page = await createPage({
       userId: user.id, title, slug,
       templateId: body.templateId || 'classic-sales',
       productId: product?.id || null,
@@ -73,14 +73,14 @@ export async function POST(req, { params }) {
   }
   if (resource === 'products') {
     if (!body.name) return err('প্রোডাক্টের নাম দিন।');
-    return NextResponse.json({ product: createProduct({ userId: user.id, ...body }) });
+    return NextResponse.json({ product: await createProduct({ userId: user.id, ...body }) });
   }
   if (resource === 'wallet') {
     // Deposit request (bKash/Nagad + TrxID) — super admin approves.
     if (!body.amount || Number(body.amount) <= 0 || !body.trxId || !body.method) {
       return err('পরিমাণ, মাধ্যম ও TrxID দিন।');
     }
-    return NextResponse.json({ deposit: createDeposit({ userId: user.id, ...body }) });
+    return NextResponse.json({ deposit: await createDeposit({ userId: user.id, ...body }) });
   }
   return err('পাওয়া যায়নি।', 404);
 }
@@ -96,15 +96,15 @@ export async function PATCH(req, { params }) {
     if (body.title != null) patch.title = String(body.title).trim();
     if (body.productId !== undefined) patch.productId = body.productId || null;
     if (Array.isArray(body.sections)) patch.sections = body.sections;
-    const page = updatePageForUser(body.id, user.id, patch);
+    const page = await updatePageForUser(body.id, user.id, patch);
     return page ? NextResponse.json({ page }) : err('পেজ পাওয়া যায়নি।', 404);
   }
   if (resource === 'products') {
-    const product = updateProductForUser(body.id, user.id, body);
+    const product = await updateProductForUser(body.id, user.id, body);
     return product ? NextResponse.json({ product }) : err('প্রোডাক্ট পাওয়া যায়নি।', 404);
   }
   if (resource === 'orders') {
-    const order = updateOrderStatusForUser(body.id, user.id, String(body.status || 'pending'));
+    const order = await updateOrderStatusForUser(body.id, user.id, String(body.status || 'pending'));
     return order ? NextResponse.json({ order }) : err('অর্ডার পাওয়া যায়নি।', 404);
   }
   if (resource === 'settings') {
@@ -114,7 +114,7 @@ export async function PATCH(req, { params }) {
     if (body.courier && typeof body.courier === 'object') {
       patch.courier = { ...user.courier, ...body.courier };
     }
-    return NextResponse.json({ user: publicUser(updateUser(user.id, patch)) });
+    return NextResponse.json({ user: publicUser(await updateUser(user.id, patch)) });
   }
   return err('পাওয়া যায়নি।', 404);
 }
@@ -125,11 +125,11 @@ export async function DELETE(req, { params }) {
   const { resource } = await params;
   const { id } = await req.json().catch(() => ({}));
   if (resource === 'pages') {
-    return deletePageForUser(id, user.id)
+    return (await deletePageForUser(id, user.id))
       ? NextResponse.json({ ok: true }) : err('পেজ পাওয়া যায়নি।', 404);
   }
   if (resource === 'products') {
-    return deleteProductForUser(id, user.id)
+    return (await deleteProductForUser(id, user.id))
       ? NextResponse.json({ ok: true }) : err('প্রোডাক্ট পাওয়া যায়নি।', 404);
   }
   return err('পাওয়া যায়নি।', 404);

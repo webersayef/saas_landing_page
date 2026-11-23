@@ -7,8 +7,8 @@ export const dynamic = 'force-dynamic';
 
 export default async function OverviewPage() {
   const user = await requireTenantUser();
-  const pages = listPagesByUser(user.id);
-  const orders = listOrdersByUser(user.id);
+  const pages = await listPagesByUser(user.id);
+  const orders = await listOrdersByUser(user.id);
   const status = getSubscriptionStatus(user);
   return (
     <>

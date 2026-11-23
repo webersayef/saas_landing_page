@@ -1,11 +1,11 @@
-# Shera IT ল্যান্ডিং পেজ SaaS — ফেজ ১
+# Shera IT ল্যান্ডিং পেজ SaaS — ফেজ ১ + ফেজ ২
 
 মাল্টি-টেন্যান্ট ল্যান্ডিং পেজ SaaS: বিক্রেতারা নিজে অ্যাকাউন্ট খুলে নিজের বাংলা ড্যাশবোর্ড থেকে
 ১ ক্লিকে ল্যান্ডিং পেজ বানায়, প্রোডাক্ট ও অর্ডার ম্যানেজ করে, পিক্সেল ও কুরিয়ার সেট করে।
 পেমেন্ট মাসিক সাবস্ক্রিপশন — **ওয়ালেট মডেলে**: ইউজার আগাম টাকা জমা রাখে (বিকাশ/নগদ + TrxID,
 মালিক Super Admin থেকে অনুমোদন করলে ওয়ালেটে জমা হয়), সিস্টেম প্রতি মাসে ওয়ালেট থেকে অটো কেটে নেয়।
 
-## যা যা তৈরি হয়েছে (ফেজ ১)
+## যা যা তৈরি হয়েছে
 
 - **Auth:** রেজিস্টার/লগইন/লগআউট, scrypt পাসওয়ার্ড হ্যাশ, HMAC-সাইনড সেশন কুকি।
   সম্পূর্ণ টেন্যান্ট আইসোলেশন — এক ইউজার অন্য ইউজারের পেজ/প্রোডাক্ট/অর্ডার দেখতে বা বদলাতে পারে না (টেস্টসহ)।
@@ -25,6 +25,11 @@
 - **PWA:** manifest + সার্ভিস ওয়ার্কার — ড্যাশবোর্ড ফোনে অ্যাপের মতো ইনস্টল করা যায়, খরচ ৳০।
 - **Cron:** `GET/POST /api/cron/billing` — `CRON_SECRET` দিয়ে সুরক্ষিত, Vercel Cron-এর জন্য `vercel.json`-এ
   প্রতিদিনের শিডিউল দেওয়া আছে।
+- **ডেটা ব্যাকএন্ড (ফেজ ২ — সম্পন্ন):** `lib/store.js` এখন async API। `SUPABASE_URL` +
+  `SUPABASE_SERVICE_ROLE_KEY` সেট থাকলে ডেটা যায় **Supabase (Postgres)**-এ — PostgREST REST দিয়ে,
+  কোনো SDK/নতুন dependency ছাড়াই। এই দুটো env না থাকলে আগের মতোই লোকাল JSON ফাইল স্টোরে চলে
+  (লোকাল dev ও টেস্টের জন্য)। Vercel-এ অবশ্যই Supabase মোড ব্যবহার করুন — সার্ভারলেসে ফাইল
+  স্টোরের ডেটা ইনস্ট্যান্স বদলালেই হারিয়ে যায় (লগইন সেশন বাউন্স করে)।
 
 ## লোকালে চালানো
 
@@ -34,25 +39,34 @@ npm install
 npm run icons                # PWA আইকন তৈরি (একবার)
 npm run seed                 # ডেমো টেন্যান্ট: demo@example.com / demo1234, পেজ: /s/demo-shop
 npm run dev                  # http://localhost:3000
-npm test                     # ৯টি টেস্ট
+npm test                     # ১৩টি টেস্ট (৯টি JSON মোড + ৪টি Supabase মোড, fake PostgREST সার্ভার দিয়ে)
 npm run build                # প্রোডাকশন বিল্ড
 ```
 
 কোনো অ্যাকাউন্ট/সার্ভার ছাড়াই সব চলে — ডেটা থাকে লোকাল JSON ফাইলে (`data/store.json`, gitignored)।
 ডিপোজিট অনুমোদনসহ পুরো বিলিং ফ্লো এই মোডেই টেস্ট করা যায়। ইমেইল `RESEND_API_KEY` না থাকলে
-শুধু outbox-এ জমা হয় (store-এর `emailOutbox` কালেকশনে দেখা যায়)।
+শুধু outbox-এ জমা হয়।
 
-## ফ্রিতে ডিপ্লয় (GitHub → Vercel + Supabase)
+## ফ্রিতে ডিপ্লয় (GitHub → Vercel + Supabase) — ঠিক এই ক্রমে
 
-1. **GitHub:** এই ফোল্ডারটা একটা প্রাইভেট রিপোতে পুশ করুন।
-2. **Supabase (Free):** নতুন প্রজেক্ট খুলে SQL Editor-এ `supabase-saas-setup.sql` রান করুন —
-   সব টেবিল (`saas_users`, `saas_pages`, `saas_products`, `saas_orders`, `saas_ledger`,
-   `saas_deposits`, `saas_email_outbox`) তৈরি হয়ে যাবে। (দ্রষ্টব্য: ফেজ ১-এর অ্যাপ রানটাইম
-   JSON স্টোর ব্যবহার করে; Supabase টেবিলগুলো ফেজ ২-এর ব্যাকএন্ড সোয়াপের জন্য প্রস্তুত রাখা হয়েছে।)
+1. **GitHub:** এই ফোল্ডারটা একটা রিপোতে পুশ করুন (যেমন `webersayef/saas_landing_page`)।
+2. **Supabase (Free) — ডেটাবেস তৈরি:**
+   - [supabase.com](https://supabase.com)-এ ফ্রি অ্যাকাউন্ট খুলে **New Project** তৈরি করুন
+     (নাম যেকোনো, যেমন `landing-saas`; ডাটাবেস পাসওয়ার্ড একটা দিয়ে রাখুন, Region: Singapore)।
+   - প্রজেক্ট তৈরি হলে বাম মেনু থেকে **SQL Editor** খুলে এই রিপোর `supabase-saas-setup.sql`
+     ফাইলের পুরো লেখা কপি-পেস্ট করে **Run** চাপুন — ৭টি টেবিল তৈরি হয়ে যাবে
+     (`saas_users`, `saas_pages`, `saas_products`, `saas_orders`, `saas_ledger`,
+     `saas_deposits`, `saas_email_outbox`)। ফাইলটা idempotent — ভুল করে দুইবার রান হলেও সমস্যা নেই।
+   - **Settings → API** পেজ থেকে দুটো জিনিস কপি করে রাখুন: **Project URL** আর
+     **service_role** key (anon key নয় — service_role-টাই লাগবে; এটা গোপন, কাউকে দেবেন না,
+     GitHub-এও তুলবেন না)।
 3. **Vercel (Hobby/Free):** রিপো ইমপোর্ট করুন, Environment Variables-এ বসান:
-   `SESSION_SECRET`, `SUPER_ADMIN_PASSWORD`, `CRON_SECRET`, (ঐচ্ছিক) `SUPABASE_URL`,
-   `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `RESEND_FROM`। Deploy চাপলেই লাইভ।
-4. ডিপ্লয়ের পর `/register`-এ নিজের টেস্ট অ্যাকাউন্ট খুলে পুরো ফ্লো যাচাই করুন।
+   `SESSION_SECRET`, `SUPER_ADMIN_PASSWORD`, `CRON_SECRET`,
+   **`SUPABASE_URL`** (উপরের Project URL), **`SUPABASE_SERVICE_ROLE_KEY`** (উপরের service_role key),
+   (ঐচ্ছিক) `RESEND_API_KEY`, `RESEND_FROM`। তারপর **Deploy** (আগে ডিপ্লয় করা থাকলে
+   env যোগ করার পর **Redeploy** করতে হবে — Deployments → ⋯ → Redeploy)।
+4. ডিপ্লয়ের পর `/register`-এ নিজের টেস্ট অ্যাকাউন্ট খুলে পুরো ফ্লো যাচাই করুন —
+   এবার লগআউট করে আবার লগইন করলেও ডেটা থাকবে, কারণ ডেটা এখন Supabase-এ।
 
 ### ফ্রি টিয়ারের সীমা — যা নজরে রাখবেন
 
@@ -60,12 +74,11 @@ npm run build                # প্রোডাকশন বিল্ড
   ব্যান্ডউইথ 100 GB/মাস ফ্রি।
 - **Supabase Free:** 500 MB ডাটাবেস; ১ সপ্তাহ ব্যবহার না হলে প্রজেক্ট ঘুমিয়ে যায় (এক ক্লিকে জাগে)।
 - **Resend Free:** দিনে ১০০ ইমেইল — টেস্টের জন্য যথেষ্ট।
-- **JSON স্টোর:** একটিমাত্র সার্ভার ইনস্ট্যান্সের জন্য ঠিক আছে; Vercel-এর সার্ভারলেস ডিস্ক
-  স্থায়ী নয় — তাই আসল লঞ্চের আগে ফেজ ২-তে Supabase ব্যাকএন্ডে সোয়াপ করা বাধ্যতামূলক।
+- **JSON স্টোর (ফলব্যাক):** শুধু লোকাল/এক-ইনস্ট্যান্স টেস্টের জন্য। Vercel-এ Supabase env
+  না দিলে ডেটা স্থায়ী হবে না — প্রোডাকশনে এই মোড ব্যবহার করবেন না।
 
-## ফেজ ২-তে যা বাকি
+## পরের ধাপে যা বাকি
 
-- Supabase ব্যাকএন্ডে আসল সোয়াপ (এখনকার store API-এর পেছনে)
 - কাস্টম ডোমেইন কানেক্ট + ফ্রি সাবডোমেইন (`shop.আপনারব্র্যান্ড.com`) ও অটো SSL
 - পেমেন্ট গেটওয়ে (SSLCommerz/UddoktaPay) — ডিপোজিট অটো-ক্রেডিট, ম্যানুয়াল TrxID যাচাই ছাড়াই
 - আরও টেমপ্লেট ও সেকশন, পেজে সেকশন সাজানো/এডিট করার ভিজ্যুয়াল এডিটর

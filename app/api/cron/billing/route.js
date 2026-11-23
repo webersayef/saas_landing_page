@@ -3,7 +3,6 @@
 // the env var is set; manual calls may use ?secret= as well.
 import { NextResponse } from 'next/server';
 import { runBillingCycle } from '@/lib/billing';
-import { loadStore } from '@/lib/store';
 
 function authorized(req) {
   const secret = process.env.CRON_SECRET;
@@ -15,7 +14,7 @@ function authorized(req) {
 
 async function handle(req) {
   if (!authorized(req)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
-  const summary = await runBillingCycle(loadStore(), new Date());
+  const summary = await runBillingCycle(null, new Date());
   return NextResponse.json({ ok: true, summary });
 }
 export const GET = handle;

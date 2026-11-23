@@ -7,15 +7,15 @@ export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const page = getPageBySlug(slug);
+  const page = await getPageBySlug(slug);
   return { title: page ? page.title : 'পেজ পাওয়া যায়নি' };
 }
 
 export default async function PublicPage({ params }) {
   const { slug } = await params;
-  const page = getPageBySlug(slug);
+  const page = await getPageBySlug(slug);
   if (!page) notFound();
-  const owner = getUserById(page.userId);
+  const owner = await getUserById(page.userId);
   const status = owner ? getSubscriptionStatus(owner) : 'locked';
 
   // Locked subscription → expiry notice (grace still serves the page).
@@ -29,7 +29,7 @@ export default async function PublicPage({ params }) {
     );
   }
 
-  const product = page.productId ? getProductById(page.productId) : null;
+  const product = page.productId ? await getProductById(page.productId) : null;
   return (
     <main>
       {owner.pixelId && (
