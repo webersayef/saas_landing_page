@@ -144,6 +144,38 @@ test('supabase: deposit approve credits wallet, double-approve blocked', async (
   assert.equal((await store.getUserById(user.id)).walletBalance, 900);
 });
 
+test('supabase: auth fields round-trip (verify code + login lockout state)', async () => {
+  seq += 1;
+  const u = await store.createUser({
+    name: `SB Auth ${seq}`, email: `sbauth${seq}@test.dev`,
+    shopName: 'Auth Shop', passwordHash: passwords.hashPassword('secret123'),
+    emailVerified: false, status: 'pending',
+    verifyCodeHash: 'deadbeef', verifyCodeExpiresAt: new Date(Date.now() + 600000).toISOString(),
+    verifyAttempts: 0, verifySentAt: new Date().toISOString(),
+  });
+  const got = await store.getUserByEmail(u.email);
+  assert.equal(got.emailVerified, false);
+  assert.equal(got.status, 'pending');
+  assert.equal(got.verifyCodeHash, 'deadbeef');
+  assert.equal(got.verifyAttempts, 0);
+  assert.ok(got.verifySentAt);
+  // Verify + lockout patches persist through PostgREST mapping.
+  await store.updateUser(u.id, {
+    emailVerified: true, status: 'active', verifyCodeHash: null,
+    verifyCodeExpiresAt: null, verifyAttempts: 0, verifySentAt: null,
+    failedLogins: 3, lockUntil: null,
+  });
+  const after = await store.getUserById(u.id);
+  assert.equal(after.emailVerified, true);
+  assert.equal(after.status, 'active');
+  assert.equal(after.verifyCodeHash, null);
+  assert.equal(after.failedLogins, 3);
+  // Default createUser (seed/demo path) stays verified + active.
+  const plain = await makeUser(0, 30);
+  assert.equal(plain.emailVerified, true);
+  assert.equal(plain.status, 'active');
+});
+
 test('supabase: billing deduction via fake PostgREST', async () => {
   const user = await makeUser(1000, -1); // due yesterday
   await makePage(user, 'sb-deduct-shop');

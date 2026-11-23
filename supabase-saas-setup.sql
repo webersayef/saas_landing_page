@@ -16,8 +16,27 @@ create table if not exists saas_users (
   courier jsonb not null default '{}'::jsonb,
   billing_warn_for timestamptz,
   billing_fail_for timestamptz,
+  email_verified boolean not null default true,
+  status text not null default 'active', -- active | pending (email not yet verified)
+  verify_code_hash text, -- SHA-256 of the 6-digit code; never the plain code
+  verify_code_expires_at timestamptz,
+  verify_attempts integer not null default 0,
+  verify_sent_at timestamptz,
+  failed_logins integer not null default 0,
+  lock_until timestamptz,
   created_at timestamptz not null default now()
 );
+
+-- Auth upgrade columns for databases created before they existed
+-- (idempotent — safe to re-run the whole file).
+alter table saas_users add column if not exists email_verified boolean not null default true;
+alter table saas_users add column if not exists status text not null default 'active';
+alter table saas_users add column if not exists verify_code_hash text;
+alter table saas_users add column if not exists verify_code_expires_at timestamptz;
+alter table saas_users add column if not exists verify_attempts integer not null default 0;
+alter table saas_users add column if not exists verify_sent_at timestamptz;
+alter table saas_users add column if not exists failed_logins integer not null default 0;
+alter table saas_users add column if not exists lock_until timestamptz;
 
 create table if not exists saas_pages (
   id uuid primary key,
@@ -85,7 +104,7 @@ create table if not exists saas_email_outbox (
   id uuid primary key,
   user_id uuid references saas_users(id) on delete set null,
   to_email text not null default '',
-  kind text not null default '', -- due_warning | payment_failed | subscription_paid
+  kind text not null default '', -- due_warning | payment_failed | subscription_paid | verify
   subject text not null default '',
   body text not null default '',
   status text not null default 'queued', -- queued | sent
