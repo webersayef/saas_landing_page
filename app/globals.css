@@ -1,0 +1,39 @@
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: 'Hind Siliguri', system-ui, sans-serif;
+  background: #f7f5fb; color: #1f2430; line-height: 1.55;
+}
+a { color: #6d28d9; }
+button { font-family: inherit; cursor: pointer; }
+input, select, textarea {
+  font-family: inherit; font-size: 15px; padding: 9px 11px;
+  border: 1px solid #d8d3e6; border-radius: 8px; width: 100%; background: #fff;
+}
+label { display: block; font-weight: 600; margin: 12px 0 5px; font-size: 14px; }
+.btn {
+  display: inline-block; background: #6d28d9; color: #fff; border: 0;
+  padding: 10px 20px; border-radius: 9px; font-weight: 700; font-size: 15px;
+  text-decoration: none;
+}
+.btn.secondary { background: #ede9f7; color: #4c1d95; }
+.btn.danger { background: #dc2626; }
+.btn.small { padding: 6px 12px; font-size: 13px; }
+.card {
+  background: #fff; border: 1px solid #e7e2f2; border-radius: 14px;
+  padding: 20px; margin-bottom: 16px;
+}
+.grid { display: grid; gap: 16px; }
+.grid.cols3 { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #eee9f8; vertical-align: top; }
+.banner { border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; font-weight: 600; }
+.banner.amber { background: #fef3c7; border: 1px solid #f59e0b; color: #92400e; }
+.banner.red { background: #fee2e2; border: 2px solid #dc2626; color: #991b1b; font-size: 17px; }
+.error { color: #b91c1c; font-weight: 600; }
+.ok { color: #15803d; font-weight: 600; }
+.muted { color: #6b7280; }
+.big-order-btn {
+  background: linear-gradient(135deg, #16a34a, #15803d); color: #fff; border: 0;
+  width: 100%; padding: 15px; font-size: 19px; font-weight: 700; border-radius: 12px;
+}
